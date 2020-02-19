@@ -1,12 +1,3 @@
-import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
-'''
-model_w1-news.h5
-kendal tau: 0.6843939405571052
-spearman rho: 0.8557886012133165
-'''
-import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import json
 import numpy as np
 from build_model import build_model_observeLSTM, masked_relative_error
@@ -14,7 +5,8 @@ from matplotlib import pyplot as plt
 from scipy.stats import kendalltau, spearmanr
 def smape(A, F):
     return (100/len(A)) * np.sum((2 * np.abs(F - A)) / (np.abs(A) + np.abs(F) + np.finfo(float).eps))
-
+def mape(A, F):
+    return (100/len(A)) * np.sum(np.abs(F - A) / (np.abs(A) + np.finfo(float).eps))
 n_input = np.load('../Data_processing/news_text_november.npy')[:-1]
 print(n_input.shape)
 submission = np.load('../Data_processing/submission_text_november.npy')[:len(n_input)+1]
@@ -42,15 +34,17 @@ model.load_weights('model_observeLSTM_exp-gru.h5')
 model.compile(loss=masked_relative_error(0.), optimizer='adam')
 pred_value = model.predict([n_input, s_input, s_pred, subred_input, subred_pred, comment_rate, c_count], batch_size=1, verbose=1)
 
-A = np.reshape(s_value, (s_value.shape[0]*s_value.shape[1]*s_value.shape[2]))
-F = np.reshape(pred_value, (s_value.shape[0]*s_value.shape[1]*s_value.shape[2]))
-nonzero = np.nonzero(A)
-A = A[nonzero]
-F = F[nonzero]
-np.save('y_true_r-gru.npy', A)
-np.save('y_pred_r-gru.npy', F)
+y_true = np.reshape(s_value, (s_value.shape[0]*s_value.shape[1]*s_value.shape[2]))
+y_pred = np.reshape(pred_value, (s_value.shape[0]*s_value.shape[1]*s_value.shape[2]))
+
+A, F = [], []
+for i in range(len(y_true)):
+    if y_true[i]!=-1.:
+        A.append(y_true[i])
+        F.append(y_pred[i])
 
 print('sMAP Error:', smape(A, F))
+print('MAP Error:', mape(A,F))
 tau, _ = kendalltau(A,F)
 rho, _ = spearmanr(A,F)
 print('kendal tau:', tau)
