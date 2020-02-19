@@ -2,8 +2,6 @@ import json
 import numpy as np
 from build_model import build_model_observeLSTM, masked_relative_error
 from keras.optimizers import Adam
-def smape(A, F):
-    return (100/len(A)) * np.sum((2 * np.abs(F - A)) / (np.abs(A) + np.abs(F) + np.finfo(float).eps))
 n_input = np.load('../Data_processing/news_text.npy')[:-1]
 submission = np.load('../Data_processing/submission_text_october.npy')[:len(n_input)+1]
 comment_count = np.load('../Data_processing/temporal_cc10min_october.npy')[:len(n_input)+1]
@@ -25,7 +23,7 @@ model = build_model_observeLSTM(news_per_hour,
                     sub_per_hour,
                     token_per_sub,
                                 comment_steps)
-model.compile(loss=masked_relative_error(0.), optimizer=Adam(clipnorm=1.0))
+model.compile(loss=masked_relative_error(-1.), optimizer=Adam(lr=0.00001, clipnorm=1.0))
 for i in range(20):
     model.fit([n_input,
                s_input,
