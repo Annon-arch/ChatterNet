@@ -1,9 +1,6 @@
-import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import json
 import numpy as np
 from build_model import build_model_observeLSTM, masked_relative_error
-from matplotlib import pyplot as plt
 from keras.optimizers import Adam
 def smape(A, F):
     return (100/len(A)) * np.sum((2 * np.abs(F - A)) / (np.abs(A) + np.abs(F) + np.finfo(float).eps))
@@ -23,39 +20,24 @@ s_value = np.load('../Data_processing/submission_value_new_october.npy')[1:len(n
 _, news_per_hour, token_per_news = n_input.shape
 _, sub_per_hour, token_per_sub = s_input.shape
 comment_steps = c_count.shape[-2]
-#print(news_per_hour, token_per_news, sub_per_hour, sub_per_news)
 model = build_model_observeLSTM(news_per_hour,
                     token_per_news,
                     sub_per_hour,
                     token_per_sub,
                                 comment_steps)
-#model.load_weights('model_observeLSTM_exp-gru.h5')
 model.compile(loss=masked_relative_error(0.), optimizer=Adam(clipnorm=1.0))
-for i in range(10):
-    model.fit([n_input[:30000],
-               s_input[:30000],
-               s_pred[:30000],
-               subred_input[:30000],
-               subred_pred[:30000],
-               comment_rate[:30000],
-               c_count[:30000]],
-                    s_value[:30000],
-                    #validation_data = ([n_input[-15000:], s_input[-15000:], s_pred[-15000:], subred_input[-15000:], subred_pred[-15000:], ], s_value[-15000:]),
+for i in range(20):
+    model.fit([n_input,
+               s_input,
+               s_pred,
+               subred_input,
+               subred_pred,
+               comment_rate,
+               c_count],
+                    s_value,
                     batch_size=1,
                     epochs=1)
-    if i<9:
+    if i<19:
         model.reset_states()
     model.save('model_observeLSTM_exp-gru.h5')
 
-
-'''
-pred_value = model.predict([n_input[-15000:], s_input[-15000:], s_pred[-15000:], subred_input[-15000:], subred_pred[-15000:]], batch_size=1, verbose=1)
-
-A = np.reshape(s_value[-15000:], (15000*s_value.shape[1]*s_value.shape[2]))
-F = np.reshape(pred_value, (15000*s_value.shape[1]*s_value.shape[2]))
-
-print('sMAP Error:', smape(A, F))
-plt.plot(list(range(A.shape[0])), list(A), color='green')
-plt.plot(list(range(A.shape[0])), list(F), color='red')
-plt.show()
-'''
