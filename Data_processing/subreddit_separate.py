@@ -14,12 +14,6 @@ with open('../Reddit dumps/Submissions/RS_2018-11') as infile:
             d['text'] = sub['title']+'\n'+sub['selftext']
             sub_dict[sub['subreddit']].append(d)
 
-##with open('../Reddit dumps/Submissions/selected_submissions.json','w') as outfile:
-##    json.dump(sub_dict, outfile)
-##
-##with open('../Reddit dumps/Submissions/selected_submissions.json','w') as infile:
-##    sub_dict = json.load(infile)
-
 com_dict = {}
 for key in sub_dict.keys():
     com_dict[key] = {}
